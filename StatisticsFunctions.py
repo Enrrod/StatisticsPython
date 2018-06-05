@@ -86,7 +86,7 @@ def indepTtest(data, printSig, groupBy, *measures):
             print ('Error: printSig must be a bool. True: the function only prints the siginificative results/ False: '
                    'the function prints all the results.')
         else:
-            if not isinstance(groupBy, list) and len(groupBy) != 2:
+            if not isinstance(groupBy, list) and len(groupBy) == 3:
                 print('Error: groupBy must be a list with three elements, the first one is the variable of grouping,'
                       ' the second and the third are the groups to compare.')
             else:
