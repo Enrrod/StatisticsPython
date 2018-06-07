@@ -2,7 +2,7 @@
 
 from xlrd import open_workbook
 import xlsxwriter as xls
-from collections import OrderedDict
+from collections import OrderedDict, Counter
 from scipy import stats
 from prettytable import PrettyTable as PT
 import unicodedata
@@ -47,6 +47,35 @@ def exportResult(table, path):
         row = row + 1
     workbook.close()
     print "Data saved"
+
+
+def analyzeBy(data, groupBy):
+    '''This function sorts a data dictionary in different dictionaries, one for each category in the grouping
+     variable.
+     INPUT: data is the dictionary containing the data names and values (dict).  groupBy is the name of the
+            grouping variable (string).
+     OUTPUT: The output is a dictionary containing several dictionaries, one for each grouping category (dict).'''
+    if not isinstance(data, dict):
+        print ('Error: data must be a dict. Use dataRead function to import your excel data.')
+    else:
+        if not isinstance(groupBy, basestring):
+            print('Error: groupBy must be a string with the name of the variable you would want to group by the data.')
+        else:
+            groupList = data[groupBy]
+            del data[groupBy]
+            cat = Counter(groupList)
+            categories = cat.keys()
+            sortedData = OrderedDict()
+            for i in range(len(categories)):
+                sortedData[categories[i]] = OrderedDict()
+            for i in range(len(data.keys())):
+                for j in range(len(sortedData.keys())):
+                    sortedData[sortedData.keys()[j]][data.keys()[i]] = []
+            for i in range(len(groupList)):
+                for j in range(len(data.keys())):
+                    sortedData[groupList[i]][data.keys()[j]].append(data[data.keys()[j]][i])
+    return sortedData
+
 
 
 def pairedTtest(data, printSig, *measures):
