@@ -1,6 +1,7 @@
 #-*- coding: utf-8 -*-
 
 from xlrd import open_workbook
+import xlsxwriter as xls
 from collections import OrderedDict
 from scipy import stats
 from prettytable import PrettyTable as PT
@@ -30,6 +31,22 @@ def dataRead(file):
                 value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore')
             data[key].append(value)
     return data
+
+
+def exportResult(table, path):
+    '''This function exports a table obtained by an statistical test to an .xlsx file in the designed route.
+    INPUT: Table to export (list) and the path of the file ending with file_name.xlsx (string).
+    OUTPUT: Xlsx file saved in the designed route.'''
+    workbook = xls.Workbook(path)
+    worksheet = workbook.add_worksheet()
+    row = 0
+    for i in range(len(table)):
+        data = table[i]
+        for j in range(len(data)):
+            worksheet.write(row, j, data[j])
+        row = row + 1
+    workbook.close()
+    print "Data saved"
 
 
 def pairedTtest(data, printSig, *measures):
@@ -69,7 +86,7 @@ def pairedTtest(data, printSig, *measures):
                 print table
             else:
                 print('Error: Measures must be paired two by two')
-
+    return table_matrix
 
 def indepTtest(data, printSig, groupBy, *measures):
     '''This function computes the independent T-test for measures grouped by groupBy from data dictionary.
@@ -131,4 +148,4 @@ def indepTtest(data, printSig, groupBy, *measures):
                 for row in range(1, len(table_matrix)):
                     table.add_row(table_matrix[row])
                 print table
-
+    return table_matrix
