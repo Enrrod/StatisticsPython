@@ -100,7 +100,7 @@ def pairedTtest(data, printSig, *measures):
                     testName = measures[i] + '/' + measures[i + 1]
                     res = stats.ttest_rel(data[measures[i]], data[measures[i + 1]])
                     results[testName] = res
-                table_matrix = [['', 'Test Statistic', 'p-Value']]
+                table_matrix = [['Paired T-test', 'Test Statistic', 'p-Value']]
                 if printSig:
                     m = results.keys()
                     for k in range(len(m)):
@@ -162,7 +162,8 @@ def indepTtest(data, printSig, groupBy, *measures):
                         testName = measures[i] + ' (' + groupBy[1] + '/' + groupBy[2] + ')'
                         res = stats.ttest_ind(m1, m2, equal_var=False)
                         results[testName] = [levene, res]
-                table_matrix = [['', 'Levene Statistic', 'Levene p-Value','Test Statistic', 'p-Value']]
+                table_matrix = [['Independent T-test', 'Levene Statistic', 'Levene p-Value','Test Statistic',
+                                 'p-Value']]
                 if printSig:
                     m = results.keys()
                     for k in range(len(m)):
@@ -183,12 +184,10 @@ def indepTtest(data, printSig, groupBy, *measures):
 
 
 def pearsonCorrel(data, printSig, *measures):
-    '''This function computes the independent T-test for measures grouped by groupBy from data dictionary.
+    '''This function computes the Pearson correlation over all the possible pairs of the variables included.
     INPUT: data is the dictionary containing the data names and values (dict).  printSig is a boolean
            variable, True: the function only prints the significative results, False: the function
-           prints all the values (bool).  groupBy is a list that contains 3 values, the first is the
-           grouping variable, the second and the third are the groups to differentiate (list).  *measures
-           contain all the pairs of variables to compare (strings).
+           prints all the values (bool). *measures contain all the variables to compare (strings).
     OUTPUT: The function prints a table in the terminal containing all the tests computed.'''
     if not isinstance(data, dict):
         print ('Error: data must be a dict. Use dataRead function to import your excel data.')
@@ -206,7 +205,7 @@ def pearsonCorrel(data, printSig, *measures):
                     testName = pairs[i][0] + '/' + pairs[i][1]
                     res = stats.pearsonr(data[pairs[i][0]], data[pairs[i][1]])
                     results[testName] = res
-                table_matrix = [['', 'Pcorrelation coefficient', 'p-Value']]
+                table_matrix = [['Pearson correlation', 'Correl. coefficient', 'p-Value']]
                 if printSig:
                     m = results.keys()
                     for k in range(len(m)):
@@ -221,3 +220,39 @@ def pearsonCorrel(data, printSig, *measures):
                 for row in range(1,len(table_matrix)):
                     table.add_row(table_matrix[row])
                 print table
+
+
+def normalityTest(data, printSig, *measures):
+    '''This function computes the normality test for the variables included.
+    INPUT: data is the dictionary containing the data names and values (dict).  printSig is
+           a boolean variable, True: the function only prints the significative results, False:
+           the function prints all the values (bool).  *measures contain all the variables to
+           compute the test over (strings).
+    OUTPUT: The function prints a table in the terminal containing all the tests computed.'''
+    if not isinstance(data, dict):
+        print ('Error: data must be a dict. Use dataRead function to import your excel data.')
+    else:
+        if not isinstance(printSig, bool):
+            print ('Error: printSig must be a bool. True: the function only prints the siginificative results/ False: '
+                   'the function prints all the results.')
+        else:
+            results = OrderedDict()
+            for i in range(len(measures)):
+                testName = measures[i]
+                res = stats.normaltest(data[measures[i]])
+                results[testName] = res
+            table_matrix = [['Normality test', 'Test Statistic', 'p-Value']]
+            if printSig:
+                m = results.keys()
+                for k in range(len(m)):
+                    pVal = results[m[k]][1]
+                    if pVal < 0.05:
+                        table_matrix.append([m[k], results[m[k]][0], results[m[k]][1]])
+            else:
+                m = results.keys()
+                for k in range(len(m)):
+                    table_matrix.append([m[k], results[m[k]][0], results[m[k]][1]])
+            table = PT(table_matrix[0])
+            for row in range(1, len(table_matrix)):
+                table.add_row(table_matrix[row])
+            print table
