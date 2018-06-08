@@ -1,11 +1,13 @@
 #-*- coding: utf-8 -*-
 
 from xlrd import open_workbook
-import xlsxwriter as xls
 from collections import OrderedDict, Counter
 from scipy import stats
 from prettytable import PrettyTable as PT
 import unicodedata
+import xlsxwriter as xls
+import itertools
+
 
 def dataRead(file):
     '''This function reads an xls file and creates a dictionary containing the variable names and the
@@ -178,3 +180,44 @@ def indepTtest(data, printSig, groupBy, *measures):
                     table.add_row(table_matrix[row])
                 print table
     return table_matrix
+
+
+def pearsonCorrel(data, printSig, *measures):
+    '''This function computes the independent T-test for measures grouped by groupBy from data dictionary.
+    INPUT: data is the dictionary containing the data names and values (dict).  printSig is a boolean
+           variable, True: the function only prints the significative results, False: the function
+           prints all the values (bool).  groupBy is a list that contains 3 values, the first is the
+           grouping variable, the second and the third are the groups to differentiate (list).  *measures
+           contain all the pairs of variables to compare (strings).
+    OUTPUT: The function prints a table in the terminal containing all the tests computed.'''
+    if not isinstance(data, dict):
+        print ('Error: data must be a dict. Use dataRead function to import your excel data.')
+    else:
+        if not isinstance(printSig, bool):
+            print ('Error: printSig must be a bool. True: the function only prints the siginificative results/ False: '
+                   'the function prints all the results.')
+        else:
+            if not  len(measures) >= 2:
+                print('Error: At least two measures are necessary to compute correlation.')
+            else:
+                pairs = list(itertools.combinations(measures, 2))
+                results = OrderedDict()
+                for i in range(len(pairs)):
+                    testName = pairs[i][0] + '/' + pairs[i][1]
+                    res = stats.pearsonr(data[pairs[i][0]], data[pairs[i][1]])
+                    results[testName] = res
+                table_matrix = [['', 'Pcorrelation coefficient', 'p-Value']]
+                if printSig:
+                    m = results.keys()
+                    for k in range(len(m)):
+                        pVal = results[m[k]][1]
+                        if pVal < 0.05:
+                            table_matrix.append([m[k], results[m[k]][0], results[m[k]][1]])
+                else:
+                    m = results.keys()
+                    for k in range(len(m)):
+                        table_matrix.append([m[k], results[m[k]][0], results[m[k]][1]])
+                table = PT(table_matrix[0])
+                for row in range(1,len(table_matrix)):
+                    table.add_row(table_matrix[row])
+                print table
