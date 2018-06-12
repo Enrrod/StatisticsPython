@@ -241,30 +241,83 @@ def normalityTest(data, printSig, *measures):
 # -----GROUPED T-TEST FUNCTIONS-----------------------------------------------------------------------------------------
 
 
-def analyzeBy(data, groupBy):
+def analyzeBy(data, sortBy):
     '''This function sorts a data dictionary in different dictionaries, one for each category in the grouping
      variable.
-     INPUT: data is the dictionary containing the data names and values (dict).  groupBy is the name of the
+     INPUT: data is the dictionary containing the data names and values (dict).  sortBy is the name of the
             grouping variable (string).
      OUTPUT: The output is a dictionary containing several dictionaries, one for each grouping category (dict).'''
     if not isinstance(data, dict):
         print ('Error: data must be a dict. Use dataRead function to import your excel data.')
     else:
-        if not isinstance(groupBy, basestring):
-            print('Error: groupBy must be a string with the name of the variable by wich you would want to group the'
+        if not isinstance(sortBy, basestring):
+            print('Error: sortBy must be a string with the name of the variable by wich you would want to group the'
                   ' data.')
         else:
-            groupList = data[groupBy]
-            del data[groupBy]
+            tempData = data.copy()
+            groupList = tempData[sortBy]
+            del tempData[sortBy]
             cat = Counter(groupList)
             categories = cat.keys()
             sortedData = OrderedDict()
             for i in range(len(categories)):
                 sortedData[categories[i]] = OrderedDict()
-            for i in range(len(data.keys())):
+            for i in range(len(tempData.keys())):
                 for j in range(len(sortedData.keys())):
-                    sortedData[sortedData.keys()[j]][data.keys()[i]] = []
+                    sortedData[sortedData.keys()[j]][tempData.keys()[i]] = []
             for i in range(len(groupList)):
-                for j in range(len(data.keys())):
-                    sortedData[groupList[i]][data.keys()[j]].append(data[data.keys()[j]][i])
+                for j in range(len(tempData.keys())):
+                    sortedData[groupList[i]][tempData.keys()[j]].append(tempData[tempData.keys()[j]][i])
     return sortedData
+
+
+def groupedPairedTtest(tempData, sortBy, printSig, *measures):
+    '''This function computes the paired T-test for pairs of measures from data dictionary.
+        INPUT: data is the dictionary containing the data names and values (dict).  printSig is
+               a boolean variable, True: the function only prints the significative results, False:
+               the function prints all the values (bool).  *measures contain all the pairs of
+               variables to compare (strings).
+        OUTPUT: The function prints a table in the terminal containing all the tests computed.'''
+    sortedData = analyzeBy(tempData, sortBy)
+    if not isinstance(printSig, bool):
+        print ('Error: printSig must be a bool. True: the function only prints the siginificative results/ False: '
+               'the function prints all the results.')
+    else:
+        if len(measures) % 2 == 0:
+            fullResults = OrderedDict()
+            for i in range(len(sortedData.keys())):
+                groupName = sortedData.keys()[i]
+                tempData = sortedData[sortedData.keys()[i]]
+                results = OrderedDict()
+                for j in range(0, len(measures), 2):
+                    testName = measures[j] + '/' + measures[j + 1]
+                    res = stats.ttest_rel(tempData[measures[j]], tempData[measures[j + 1]])
+                    results[testName] = res
+                fullResults[groupName] = results
+            table_matrix = [['', 'Paired T-test', 'Test Statistic', 'p-Value']]
+            for i in range(len(fullResults.keys())):
+                if printSig:
+                    results = fullResults[fullResults.keys()[i]]
+                    m = results.keys()
+                    for k in range(len(m)):
+                        pVal = results[m[k]][1]
+                        if pVal < 0.05:
+                            if k == 0:
+                                table_matrix.append([fullResults.keys()[i], m[k], results[m[k]][0], results[m[k]][1]])
+                            else:
+                                table_matrix.append(['', m[k], results[m[k]][0], results[m[k]][1]])
+                else:
+                    results = fullResults[fullResults.keys()[i]]
+                    m = results.keys()
+                    for k in range(len(m)):
+                        if k == 0:
+                            table_matrix.append([fullResults.keys()[i], m[k], results[m[k]][0], results[m[k]][1]])
+                        else:
+                            table_matrix.append(['', m[k], results[m[k]][0], results[m[k]][1]])
+            table = PT(table_matrix[0])
+            for row in range(1, len(table_matrix)):
+                table.add_row(table_matrix[row])
+            print table
+        else:
+            print('Error: Measures must be paired two by two')
+    return table_matrix
