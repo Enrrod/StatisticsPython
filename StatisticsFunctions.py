@@ -8,6 +8,8 @@ import unicodedata
 import xlsxwriter as xls
 import itertools
 
+# -----DATA IMPORT AND EXPORT FUNCTIONS---------------------------------------------------------------------------------
+
 
 def dataRead(file):
     '''This function reads an xls file and creates a dictionary containing the variable names and the
@@ -50,34 +52,7 @@ def exportResult(table, path):
     workbook.close()
     print "Data saved"
 
-
-def analyzeBy(data, groupBy):
-    '''This function sorts a data dictionary in different dictionaries, one for each category in the grouping
-     variable.
-     INPUT: data is the dictionary containing the data names and values (dict).  groupBy is the name of the
-            grouping variable (string).
-     OUTPUT: The output is a dictionary containing several dictionaries, one for each grouping category (dict).'''
-    if not isinstance(data, dict):
-        print ('Error: data must be a dict. Use dataRead function to import your excel data.')
-    else:
-        if not isinstance(groupBy, basestring):
-            print('Error: groupBy must be a string with the name of the variable you would want to group by the data.')
-        else:
-            groupList = data[groupBy]
-            del data[groupBy]
-            cat = Counter(groupList)
-            categories = cat.keys()
-            sortedData = OrderedDict()
-            for i in range(len(categories)):
-                sortedData[categories[i]] = OrderedDict()
-            for i in range(len(data.keys())):
-                for j in range(len(sortedData.keys())):
-                    sortedData[sortedData.keys()[j]][data.keys()[i]] = []
-            for i in range(len(groupList)):
-                for j in range(len(data.keys())):
-                    sortedData[groupList[i]][data.keys()[j]].append(data[data.keys()[j]][i])
-    return sortedData
-
+# -----T-TEST FUNCTIONS-------------------------------------------------------------------------------------------------
 
 
 def pairedTtest(data, printSig, *measures):
@@ -182,6 +157,8 @@ def indepTtest(data, printSig, groupBy, *measures):
                 print table
     return table_matrix
 
+# -----CORRELATION TEST FUNCTIONS---------------------------------------------------------------------------------------
+
 
 def pearsonCorrel(data, printSig, *measures):
     '''This function computes the Pearson correlation over all the possible pairs of the variables included.
@@ -220,6 +197,9 @@ def pearsonCorrel(data, printSig, *measures):
                 for row in range(1,len(table_matrix)):
                     table.add_row(table_matrix[row])
                 print table
+    return table_matrix
+
+# -----OTHER TEST FUNCTIONS---------------------------------------------------------------------------------------------
 
 
 def normalityTest(data, printSig, *measures):
@@ -256,3 +236,34 @@ def normalityTest(data, printSig, *measures):
             for row in range(1, len(table_matrix)):
                 table.add_row(table_matrix[row])
             print table
+    return table_matrix
+
+# -----GROUPED T-TEST FUNCTIONS-----------------------------------------------------------------------------------------
+
+
+def analyzeBy(data, groupBy):
+    '''This function sorts a data dictionary in different dictionaries, one for each category in the grouping
+     variable.
+     INPUT: data is the dictionary containing the data names and values (dict).  groupBy is the name of the
+            grouping variable (string).
+     OUTPUT: The output is a dictionary containing several dictionaries, one for each grouping category (dict).'''
+    if not isinstance(data, dict):
+        print ('Error: data must be a dict. Use dataRead function to import your excel data.')
+    else:
+        if not isinstance(groupBy, basestring):
+            print('Error: groupBy must be a string with the name of the variable you would want to group by the data.')
+        else:
+            groupList = data[groupBy]
+            del data[groupBy]
+            cat = Counter(groupList)
+            categories = cat.keys()
+            sortedData = OrderedDict()
+            for i in range(len(categories)):
+                sortedData[categories[i]] = OrderedDict()
+            for i in range(len(data.keys())):
+                for j in range(len(sortedData.keys())):
+                    sortedData[sortedData.keys()[j]][data.keys()[i]] = []
+            for i in range(len(groupList)):
+                for j in range(len(data.keys())):
+                    sortedData[groupList[i]][data.keys()[j]].append(data[data.keys()[j]][i])
+    return sortedData
