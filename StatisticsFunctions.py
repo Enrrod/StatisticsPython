@@ -251,7 +251,8 @@ def analyzeBy(data, groupBy):
         print ('Error: data must be a dict. Use dataRead function to import your excel data.')
     else:
         if not isinstance(groupBy, basestring):
-            print('Error: groupBy must be a string with the name of the variable you would want to group by the data.')
+            print('Error: groupBy must be a string with the name of the variable by wich you would want to group the'
+                  ' data.')
         else:
             groupList = data[groupBy]
             del data[groupBy]
