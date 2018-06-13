@@ -271,14 +271,14 @@ def analyzeBy(data, sortBy):
     return sortedData
 
 
-def groupedPairedTtest(tempData, sortBy, printSig, *measures):
+def groupedPairedTtest(data, sortBy, printSig, *measures):
     '''This function computes the paired T-test for pairs of measures from data dictionary.
         INPUT: data is the dictionary containing the data names and values (dict).  printSig is
                a boolean variable, True: the function only prints the significative results, False:
                the function prints all the values (bool).  *measures contain all the pairs of
                variables to compare (strings).
         OUTPUT: The function prints a table in the terminal containing all the tests computed.'''
-    sortedData = analyzeBy(tempData, sortBy)
+    sortedData = analyzeBy(data, sortBy)
     if not isinstance(printSig, bool):
         print ('Error: printSig must be a bool. True: the function only prints the siginificative results/ False: '
                'the function prints all the results.')
@@ -321,3 +321,82 @@ def groupedPairedTtest(tempData, sortBy, printSig, *measures):
         else:
             print('Error: Measures must be paired two by two')
     return table_matrix
+
+
+def groupedIndepTtest(data, sortBy, printSig, groupBy, *measures):
+    '''This function computes the paired T-test for pairs of measures from data dictionary.
+        INPUT: data is the dictionary containing the data names and values (dict).  printSig is
+               a boolean variable, True: the function only prints the significative results, False:
+               the function prints all the values (bool).  *measures contain all the pairs of
+               variables to compare (strings).
+        OUTPUT: The function prints a table in the terminal containing all the tests computed.'''
+    sortedData = analyzeBy(data, sortBy)
+    if not isinstance(printSig, bool):
+        print ('Error: printSig must be a bool. True: the function only prints the siginificative results/ False: '
+               'the function prints all the results.')
+    else:
+        if not isinstance(groupBy, list) and len(groupBy) == 3:
+            print('Error: groupBy must be a list with three elements, the first one is the variable of grouping,'
+                  ' the second and the third are the groups to compare.')
+        else:
+            fullResults = OrderedDict()
+            for i in range(len(sortedData.keys())):
+                groupName = sortedData.keys()[i]
+                tempData = sortedData[sortedData.keys()[i]]
+                indexG1 = []
+                indexG2 = []
+                results = OrderedDict()
+                for j in range(len(tempData[groupBy[0]])):
+                    if tempData[groupBy[0]][j] == groupBy[1]:
+                        indexG1.append(j)
+                    elif tempData[groupBy[0]][j] == groupBy[2]:
+                        indexG2.append(j)
+                for j in range(len(measures)):
+                    m1 = []
+                    m2 = []
+                    for g1 in range(len(indexG1)):
+                        m1.append(tempData[measures[j]][g1])
+                    for g2 in range(len(indexG2)):
+                        m2.append(tempData[measures[j]][g2])
+                    levene = stats.levene(m1, m2)
+                    if levene[1] > 0.05:
+                        testName = measures[j] + ' (' + groupBy[1] + '/' + groupBy[2] + ')'
+                        res = stats.ttest_ind(m1, m2, equal_var=True)
+                        results[testName] = [levene, res]
+                    elif levene[1] < 0.05:
+                        testName = measures[j] + ' (' + groupBy[1] + '/' + groupBy[2] + ')'
+                        res = stats.ttest_ind(m1, m2, equal_var=False)
+                        results[testName] = [levene, res]
+                    fullResults[groupName] = results
+            table_matrix = [['', 'Independent T-test', 'Levene Statistic', 'Levene p-Value', 'Test Statistic',
+                            'p-Value']]
+            for i in range(len(fullResults.keys())):
+                if printSig:
+                    results = fullResults[fullResults.keys()[i]]
+                    m = results.keys()
+                    for k in range(len(m)):
+                        pVal = results[m[k]][1][1]
+                        if pVal < 0.05:
+                            if k == 0:
+                                table_matrix.append([fullResults.keys()[i], m[k], results[m[k]][0][0],
+                                                     results[m[k]][0][1], results[m[k]][1][0], results[m[k]][1][1]])
+                            else:
+                                table_matrix.append(['', m[k], results[m[k]][0][0],
+                                                     results[m[k]][0][1], results[m[k]][1][0], results[m[k]][1][1]])
+                else:
+                    results = fullResults[fullResults.keys()[i]]
+                    m = results.keys()
+                    for k in range(len(m)):
+                        if k == 0:
+                            table_matrix.append([fullResults.keys()[i], m[k], results[m[k]][0][0],
+                                                 results[m[k]][0][1], results[m[k]][1][0], results[m[k]][1][1]])
+                        else:
+                            table_matrix.append(['', m[k], results[m[k]][0][0],
+                                                 results[m[k]][0][1], results[m[k]][1][0], results[m[k]][1][1]])
+                table = PT(table_matrix[0])
+                for row in range(1, len(table_matrix)):
+                    table.add_row(table_matrix[row])
+            print table
+    return table_matrix
+
+
