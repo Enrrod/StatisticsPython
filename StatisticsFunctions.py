@@ -1,12 +1,13 @@
 #-*- coding: utf-8 -*-
 
 from xlrd import open_workbook
-from collections import OrderedDict, Counter
+from collections import OrderedDict, Counter, namedtuple
 from scipy import stats
 from prettytable import PrettyTable as PT
 import unicodedata
 import xlsxwriter as xls
 import itertools
+import pyvttbl as pt
 
 # -----DATA IMPORT AND EXPORT FUNCTIONS---------------------------------------------------------------------------------
 
@@ -400,3 +401,68 @@ def groupedIndepTtest(data, sortBy, printSig, groupBy, *measures):
     return table_matrix
 
 
+# -----ANOVA FUNCTIONS--------------------------------------------------------------------------------------------------
+
+
+def repeatedMeasuresAnova(data, subID, conditionName, *measures):
+    '''This function computes a ANOVA for repeated measures over the variables defined along
+    with the condition factor.
+    INPUT: data is the dictionary containing the data names and values (dict). subID is the name
+           of the variable that codes the identifier of the subjects(string). conditionName is the
+           name of the condition over you want to compute the ANOVA (string). *measures contain
+           pairs of variable / condition over you want to compute the ANOVA.
+    OUTPUT: The function prints a table in the terminal containing all the tests computed.'''
+    if not isinstance(data, dict):
+        print ('Error: data must be a dict. Use dataRead function to import your excel data.')
+    else:
+        if not isinstance(subID, basestring):
+            print ('Error: subID must be a string containing the name of the variable with the subjects ID.')
+        else:
+            if not isinstance(conditionName, basestring):
+                print ('Error: conditionName must be a string containing the name of the condition analyzed in the'
+                       ' anova.')
+            else:
+                errorCount = 0
+                for elem in range(len(measures)):
+                    if not isinstance(measures[elem], tuple):
+                        errorCount = errorCount + 1
+                if errorCount != 0:
+                    print('Error: measures must contain tuples with a data variable and an associated condition.')
+                else:
+                    Sub = namedtuple('Sub', ['Sub_id', 'measure', 'condition'])
+                    df = pt.DataFrame()
+                    for i in range(len(measures)):
+                        meas = data[measures[i][0]]
+                        for j in range(len(meas)):
+                            df.insert(Sub(data[subID][j], meas[j], measures[i][1])._asdict())
+                    aov = df.anova('measure', sub='Sub_id', wfactors=['condition'])
+                    table_matrix = [['Source', '', 'Type III SS', 'df', 'SM', 'F', '.Sig'],
+
+                                    [conditionName, 'Sphericity Assumed', aov[('condition',)]['ss'], aov[('condition',)]['df'],
+                                     aov[('condition',)]['mss'], aov[('condition',)]['F'], aov[('condition',)]['p']],
+
+                                    ['', 'Greenhouse-Geiser', aov[('condition',)]['ss'], aov[('condition',)]['df_gg'],
+                                     aov[('condition',)]['mss_gg'], aov[('condition',)]['F_gg'], aov[('condition',)]['p_gg']],
+
+                                    ['', 'Hyunh-Feldt', aov[('condition',)]['ss'], aov[('condition',)]['df_hf'],
+                                     aov[('condition',)]['mss_hf'], aov[('condition',)]['F_hf'], aov[('condition',)]['p_hf']],
+
+                                    ['', 'Box', aov[('condition',)]['ss'], aov[('condition',)]['df_lb'], aov[('condition',)]['mss_lb'],
+                                     aov[('condition',)]['F_lb'], aov[('condition',)]['p_lb']],
+
+                                    ['Error(' + conditionName + ')', 'Sphericity Assumed', aov[('condition',)]['sse'], aov[('condition',)]['dfe'],
+                                     aov[('condition',)]['mse'], '-', '--'],
+
+                                    ['', 'Greenhouse-Geiser', aov[('condition',)]['sse'], aov[('condition',)]['dfe_gg'],
+                                     aov[('condition',)]['mse_gg'], '-', '--'],
+
+                                    ['', 'Hyunh-Feldt', aov[('condition',)]['sse'], aov[('condition',)]['dfe_hf'],
+                                     aov[('condition',)]['mse_hf'], '-', '--'],
+
+                                    ['', 'Box', aov[('condition',)]['sse'], aov[('condition',)]['dfe_lb'],
+                                     aov[('condition',)]['mse_lb'], '-', '--']]
+                    table = PT(table_matrix[0])
+                    for row in range(1, len(table_matrix)):
+                        table.add_row(table_matrix[row])
+                    print table
+    return table_matrix
