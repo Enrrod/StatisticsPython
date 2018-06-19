@@ -466,3 +466,60 @@ def repeatedMeasuresAnova(data, subID, conditionName, *measures):
                         table.add_row(table_matrix[row])
                     print table
     return table_matrix
+
+
+# -----POST HOC-TEST----------------------------------------------------------------------------------------------------
+
+
+def repMeasBonferroniCorrect(data, printSig, *measures):
+    '''This function computes the paired T-test for pairs of measures from data dictionary.
+    INPUT: data is the dictionary containing the data names and values (dict).  printSig is
+           a boolean variable, True: the function only prints the significative results, False:
+           the function prints all the values (bool).  *measures contain all the pairs of
+           variables to compare (strings).
+    OUTPUT: The function prints a table in the terminal containing all the tests computed.'''
+    if not isinstance(data, dict):
+        print ('Error: data must be a dict. Use dataRead function to import your excel data.')
+    else:
+        if not isinstance(printSig, bool):
+            print ('Error: printSig must be a bool. True: the function only prints the siginificative results/ False: '
+                   'the function prints all the results.')
+        else:
+            n = len(measures)
+            results = OrderedDict()
+            for i in range(0, len(measures)):
+                results[measures[i]] = []
+                for j in range(0, len(measures)):
+                    if j != i:
+                        res = stats.ttest_rel(data[measures[i]], data[measures[j]])
+                        results[measures[i]].append([measures[j], res])
+            table_matrix = [['Bonferroni correction', 'Pairwise T-test', 'Test Statistic', 'p-Value']]
+            if printSig:
+                m = results.keys()
+                for k in range(len(m)):
+                    count = 0
+                    for t in range(len(results[m[k]])):
+                        pVal = results[m[k]][t][1][1]
+                        if pVal < (0.05 / n):
+                            count = count + 1
+                            if count == 1:
+                                table_matrix.append([m[k], results[m[k]][t][0], results[m[k]][t][1][0], results[m[k]][t][1][1]])
+                            else:
+                                table_matrix.append(['', results[m[k]][t][0], results[m[k]][t][1][0], results[m[k]][t][1][1]])
+                table_matrix.append(['Sig if p-Value <' + str(0.05 / n), '-', '--', '---'])
+            else:
+                m = results.keys()
+                for k in range(len(m)):
+                    for t in range(len(results[m[k]])):
+                        if t == 0:
+                            table_matrix.append(
+                                [m[k], results[m[k]][t][0], results[m[k]][t][1][0], results[m[k]][t][1][1]])
+                        else:
+                            table_matrix.append(
+                                ['', results[m[k]][t][0], results[m[k]][t][1][0], results[m[k]][t][1][1]])
+                table_matrix.append(['Sig if p-Value < ' + str(0.05 / n), '-', '--', '---'])
+            table = PT(table_matrix[0])
+            for row in range(1, len(table_matrix)):
+                table.add_row(table_matrix[row])
+            print table
+    return table_matrix
