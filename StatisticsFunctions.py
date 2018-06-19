@@ -472,11 +472,12 @@ def repeatedMeasuresAnova(data, subID, conditionName, *measures):
 
 
 def repMeasBonferroniCorrect(data, printSig, *measures):
-    '''This function computes the paired T-test for pairs of measures from data dictionary.
+    '''This function computes the Bonferroni correction for pairwise  combination of measures
+    from data dictionary.
     INPUT: data is the dictionary containing the data names and values (dict).  printSig is
            a boolean variable, True: the function only prints the significative results, False:
-           the function prints all the values (bool).  *measures contain all the pairs of
-           variables to compare (strings).
+           the function prints all the values (bool).  *measures contain all the variables to
+           compute the pairwise tests (strings).
     OUTPUT: The function prints a table in the terminal containing all the tests computed.'''
     if not isinstance(data, dict):
         print ('Error: data must be a dict. Use dataRead function to import your excel data.')
@@ -506,7 +507,7 @@ def repMeasBonferroniCorrect(data, printSig, *measures):
                                 table_matrix.append([m[k], results[m[k]][t][0], results[m[k]][t][1][0], results[m[k]][t][1][1]])
                             else:
                                 table_matrix.append(['', results[m[k]][t][0], results[m[k]][t][1][0], results[m[k]][t][1][1]])
-                table_matrix.append(['Sig if p-Value <' + str(0.05 / n), '-', '--', '---'])
+                table_matrix.append(['Sig if p-Value < ' + str(0.05 / n), '-', '--', '---'])
             else:
                 m = results.keys()
                 for k in range(len(m)):
