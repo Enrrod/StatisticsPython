@@ -468,7 +468,7 @@ def repeatedMeasuresAnova(data, subID, conditionName, *measures):
     return table_matrix
 
 
-# -----POST HOC-TEST----------------------------------------------------------------------------------------------------
+# -----POST HOC-TESTs---------------------------------------------------------------------------------------------------
 
 
 def repMeasBonferroniCorrect(data, printSig, *measures):
